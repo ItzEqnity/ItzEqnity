@@ -30,11 +30,18 @@
       <div class="intro-letters" id="introLetters">
         <span>E</span><span>Q</span><span>N</span><span>I</span><span>T</span><span>Y</span>
       </div>
-      <div class="intro-bar"><span></span></div>
+      <div class="intro-meta">
+        <p class="intro-status mono" id="introStatus">init</p>
+        <div class="intro-bar"><span></span></div>
+        <p class="intro-pct mono" id="introPct">00%</p>
+      </div>
     </div>
   </div>
 
-  <noscript><style>#intro,#gate{display:none}body{overflow:auto}</style></noscript>
+  <!-- Accent flash revealed by the intro wipe -->
+  <div id="introFlash" aria-hidden="true"></div>
+
+  <noscript><style>#intro,#introFlash,#gate{display:none}body{overflow:auto}.site-header,.eyebrow,.hero-title .line,.roles,.hero-cta,.scroll-hint,.reveal{opacity:1!important;transform:none!important;animation:none!important}</style></noscript>
 
   <!-- Cursor spotlight -->
   <div id="spotlight" aria-hidden="true"></div>

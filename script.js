@@ -71,25 +71,63 @@
   /* ----------------------------------------------------------
      Intro loader — then hand over to the page
      ---------------------------------------------------------- */
-  function runIntro() {
+  function runIntro(onDone) {
+    // Clone the overlay so every CSS animation restarts from zero now that
+    // the gate is gone (they used to run at page load, hidden behind it).
     const intro = $("#intro");
+    const fresh = intro.cloneNode(true);
+    intro.replaceWith(fresh);
+
+    const flash = $("#introFlash");
+
     document.body.classList.add("no-scroll");
 
+    const pct = fresh.querySelector("#introPct");
+    const status = fresh.querySelector("#introStatus");
+
     const hide = () => {
-      intro.classList.add("done");
+      fresh.classList.add("done");
       document.body.classList.remove("no-scroll");
-      // remove from DOM after the wipe transition
-      setTimeout(() => intro.remove(), 1000);
+      setTimeout(() => fresh.remove(), 2600);
+      // accent flash wipes a beat later, revealing the page
+      setTimeout(() => {
+        flash.classList.add("done");
+        if (onDone) onDone();
+      }, 150);
+      setTimeout(() => flash.remove(), 2700);
     };
 
     if (reducedMotion) {
-      intro.style.display = "none";
+      fresh.style.display = "none";
+      flash.style.display = "none";
       document.body.classList.remove("no-scroll");
+      if (onDone) onDone();
       return;
     }
 
-    // letters fill in by ~1.65s, so wipe shortly after
-    setTimeout(hide, 1850);
+    // progress counter, synced to the bar (bar starts at 0.45s, fills over 1s)
+    const start = 450;
+    const duration = 1000;
+    const begin = performance.now() + start;
+
+    const frame = (now) => {
+      const t = Math.min(1, Math.max(0, (now - begin) / duration));
+      const eased = 1 - Math.pow(1 - t, 3);
+      pct.textContent = String(Math.round(eased * 100)).padStart(2, "0") + "%";
+      if (t < 1) requestAnimationFrame(frame);
+    };
+    setTimeout(() => requestAnimationFrame(frame), start);
+
+    // status line
+    [
+      [0, "init"],
+      [550, "build"],
+      [1050, "ship"],
+      [1500, "done"],
+    ].forEach(([at, text]) => setTimeout(() => (status.textContent = text), at));
+
+    // letters fill in by ~1.4s, so wipe shortly after
+    setTimeout(hide, 1650);
   }
 
   /* ----------------------------------------------------------
@@ -128,7 +166,7 @@
       setTimeout(tick, delay);
     }
 
-    setTimeout(tick, 2100); // wait for the intro
+    tick();
   }
 
   /* ----------------------------------------------------------
@@ -166,6 +204,27 @@
         const rect = card.getBoundingClientRect();
         card.style.setProperty("--mx", `${e.clientX - rect.left}px`);
         card.style.setProperty("--my", `${e.clientY - rect.top}px`);
+      });
+    });
+  }
+
+  /* ----------------------------------------------------------
+     Service card 3D tilt (desktop only)
+     ---------------------------------------------------------- */
+  function initTilt() {
+    if (reducedMotion || window.matchMedia("(pointer: coarse)").matches) return;
+    const cards = document.querySelectorAll(".card");
+    cards.forEach((card) => {
+      card.addEventListener("pointermove", (e) => {
+        const rect = card.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+        card.style.setProperty("--rx", `${((0.5 - py) * 7).toFixed(2)}deg`);
+        card.style.setProperty("--ry", `${((px - 0.5) * 7).toFixed(2)}deg`);
+      });
+      card.addEventListener("pointerleave", () => {
+        card.style.setProperty("--rx", "0deg");
+        card.style.setProperty("--ry", "0deg");
       });
     });
   }
@@ -253,15 +312,19 @@
      ---------------------------------------------------------- */
   document.addEventListener("DOMContentLoaded", () => {
     initYear();
-    initReveal();
     initCardGlow();
+    initTilt();
     initSpotlight();
     initDiscord();
 
     // site load animation only starts after the gate
     initGate(() => {
-      runIntro();
-      initTyped();
+      runIntro(() => {
+        // hero/header entrance animations + scroll reveals start now
+        document.body.classList.add("ready");
+        initReveal();
+        setTimeout(initTyped, 1500);
+      });
     });
   });
 })();
