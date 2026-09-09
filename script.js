@@ -105,6 +105,16 @@
       return;
     }
 
+    // type out the wordmark slowly, like a terminal
+    const word = fresh.querySelector("#introWord");
+    const wordmark = "EQNITY";
+    let typed = 0;
+    const typeTimer = setInterval(() => {
+      typed++;
+      word.textContent = wordmark.slice(0, typed);
+      if (typed === wordmark.length) clearInterval(typeTimer);
+    }, 120);
+
     // progress counter, synced to the bar (bar starts at 0.45s, fills over 1s)
     const start = 450;
     const duration = 1000;
@@ -206,6 +216,45 @@
         card.style.setProperty("--my", `${e.clientY - rect.top}px`);
       });
     });
+  }
+
+  /* ----------------------------------------------------------
+     Scroll world — pinned horizontal services scroller
+     (sticky-based, no external libs; disabled for reduced motion)
+     ---------------------------------------------------------- */
+  function initWorldScroll() {
+    if (reducedMotion) return;
+    const pin = $("#world .world-pin");
+    const sticky = $("#world .world-sticky");
+    const track = $("#worldTrack");
+    if (!pin || !sticky || !track) return;
+
+    const max = () =>
+      Math.max(0, track.scrollWidth + sticky.getBoundingClientRect().left - window.innerWidth);
+
+    const update = () => {
+      const room = pin.offsetHeight - window.innerHeight;
+      if (room <= 0) return;
+      const progress = Math.min(1, Math.max(0, -pin.getBoundingClientRect().top / room));
+      track.style.transform = `translate3d(${-progress * max()}px, 0, 0)`;
+    };
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        update();
+        ticking = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+    // re-measure once fonts have settled
+    setTimeout(update, 400);
+    setTimeout(update, 1200);
   }
 
   /* ----------------------------------------------------------
@@ -323,6 +372,7 @@
         // hero/header entrance animations + scroll reveals start now
         document.body.classList.add("ready");
         initReveal();
+        initWorldScroll();
         setTimeout(initTyped, 1500);
       });
     });
