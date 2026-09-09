@@ -10,6 +10,65 @@
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ----------------------------------------------------------
+     Continue gate — "You sure wanna continue?"
+     Page only starts loading after the user continues.
+     ---------------------------------------------------------- */
+  function initGate(onContinue) {
+    const gate = $("#gate");
+    const yes = $("#gateYes");
+    const no = $("#gateNo");
+
+    if (!gate || !yes || !no) {
+      onContinue();
+      return;
+    }
+
+    const nahMsgs = [
+      "too late, you're already here",
+      "the exit button works, you know",
+      "you sure? the site's pretty cool",
+    ];
+    let nahCount = 0;
+
+    document.body.classList.add("no-scroll");
+
+    yes.addEventListener("click", () => {
+      gate.classList.add("done");
+      setTimeout(() => gate.remove(), 600);
+      document.body.classList.remove("no-scroll");
+      onContinue();
+    });
+
+    no.addEventListener("click", () => {
+      let msg = gate.querySelector(".gate-msg");
+      if (!msg) {
+        msg = document.createElement("p");
+        msg.className = "gate-msg mono";
+        gate.querySelector(".gate-inner").appendChild(msg);
+      }
+      msg.textContent = nahMsgs[nahCount % nahMsgs.length];
+      nahCount++;
+      // restart the reveal animation
+      msg.classList.remove("show");
+      void msg.offsetWidth;
+      msg.classList.add("show");
+    });
+
+    // keyboard: Enter = continue, Escape = nah
+    gate.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        yes.click();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        no.click();
+      }
+    });
+
+    yes.focus({ preventScroll: true });
+  }
+
+  /* ----------------------------------------------------------
      Intro loader — then hand over to the page
      ---------------------------------------------------------- */
   function runIntro() {
@@ -194,11 +253,15 @@
      ---------------------------------------------------------- */
   document.addEventListener("DOMContentLoaded", () => {
     initYear();
-    runIntro();
-    initTyped();
     initReveal();
     initCardGlow();
     initSpotlight();
     initDiscord();
+
+    // site load animation only starts after the gate
+    initGate(() => {
+      runIntro();
+      initTyped();
+    });
   });
 })();

@@ -13,6 +13,17 @@
 </head>
 <body>
 
+  <!-- Continue gate -->
+  <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateQ">
+    <div class="gate-inner" id="gateInner">
+      <p class="gate-q mono" id="gateQ">You sure wanna continue?</p>
+      <div class="gate-btns">
+        <button id="gateYes" class="gate-btn gate-yes mono" type="button" autofocus>continue_</button>
+        <button id="gateNo" class="gate-btn gate-no mono" type="button">nah</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Loading overlay -->
   <div id="intro" aria-hidden="true">
     <div class="intro-inner">
@@ -23,7 +34,7 @@
     </div>
   </div>
 
-  <noscript><style>#intro{display:none}body{overflow:auto}</style></noscript>
+  <noscript><style>#intro,#gate{display:none}body{overflow:auto}</style></noscript>
 
   <!-- Cursor spotlight -->
   <div id="spotlight" aria-hidden="true"></div>
